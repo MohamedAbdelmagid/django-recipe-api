@@ -7,6 +7,7 @@ from rest_framework import status
 
 
 CREATE_USER_URL = reverse("user:create")
+TOKEN_URL = reverse("user:token")
 
 
 def create_user(**params):
@@ -57,3 +58,56 @@ class PublicUserApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         user_exists = get_user_model().objects.filter(email=payload["email"]).exists()
         self.assertFalse(user_exists)
+
+    def test_create_token_for_user(self):
+        """ Test that a token is created for the user """
+        payload = {
+            "email": "test@gmail.com",
+            "password": "testpassword",
+            "name": "Mohamed Abdelmagid",
+        }
+        create_user(**payload)
+        response = self.client.post(TOKEN_URL, payload)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("token", response.data)
+
+    def test_create_token_invalid_credentials(self):
+        """ Test that a token is created created for invalid credentials """
+        payload = {
+            "email": "test@gmail.com",
+            "password": "testpassword",
+            "name": "Mohamed Abdelmagid",
+        }
+        create_user(**payload)
+        response = self.client.post(
+            TOKEN_URL, {"email": "test@gmail.com", "password": "wrongpassword"}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn("token", response.data)
+
+    def test_create_token_no_user(self):
+        """ Test that a token is not created if user doesn't exist """
+        payload = {
+            "email": "test@gmail.com",
+            "password": "testpassword",
+        }
+        response = self.client.post(TOKEN_URL, payload)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn("token", response.data)
+
+    def test_create_token_missing_field(self):
+        """ Test that email and password are provided """
+        response1 = self.client.post(
+            TOKEN_URL, {"email": "", "password": "testpassword"}
+        )
+        response2 = self.client.post(
+            TOKEN_URL, {"email": "test@gmail.com", "password": ""}
+        )
+
+        self.assertEqual(response1.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn("token", response1.data)
+        self.assertEqual(response2.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn("token", response2.data)
