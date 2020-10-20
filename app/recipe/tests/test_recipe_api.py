@@ -154,3 +154,42 @@ class PrivateRecipeApiTests(TestCase):
         self.assertEqual(ingredients.count(), 2)
         self.assertIn(ingredient1, ingredients)
         self.assertIn(ingredient2, ingredients)
+
+    def test_update_recipe_put(self):
+        """ Test updating a recipe with put method """
+        recipe = sample_recipe(user=self.user)
+        recipe.tags.add(sample_tag(self.user))
+
+        payload = {
+            "name": "Mutton Curry",
+            "cook_time": 20,
+            "price": 5.00,
+        }
+        url = recipe_url(recipe.id)
+        self.client.put(url, payload)
+
+        recipe.refresh_from_db()
+        self.assertEqual(recipe.name, payload["name"])
+        self.assertEqual(recipe.cook_time, payload["cook_time"])
+        self.assertEqual(recipe.price, payload["price"])
+        tags = recipe.tags.all()
+        self.assertEqual(tags.count(), 0)
+
+    def test_update_recipe_patch(self):
+        """ Test updating a recipe with patch method """
+        recipe = sample_recipe(user=self.user)
+        recipe.tags.add(sample_tag(self.user))
+
+        new_tag = sample_tag(user=self.user, name="Steak")
+        payload = {
+            "name": "Philly Cheesesteak",
+            "tags": [new_tag.id],
+        }
+        url = recipe_url(recipe.id)
+        self.client.patch(url, payload)
+
+        recipe.refresh_from_db()
+        self.assertEqual(recipe.name, payload["name"])
+        tags = recipe.tags.all()
+        self.assertEqual(tags.count(), 1)
+        self.assertIn(new_tag, tags)
