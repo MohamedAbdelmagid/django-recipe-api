@@ -23,16 +23,20 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     """ Serializer for recipe objects """
+
     ingredients = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Ingredient.objects.all()
+        many=True, queryset=Ingredient.objects.all()
     )
-    tags = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Tag.objects.all()
-    )
+    tags = serializers.PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
 
     class Meta:
         model = Recipe
-        fields = ('id', 'name', 'price', 'cook_time', 'ingredients', 'tags')
-        read_only_fields = ('id',)
+        fields = ("id", "name", "price", "cook_time", "ingredients", "tags")
+        read_only_fields = ("id",)
+
+
+class RecipeDetailSerializer(RecipeSerializer):
+    """ Serializer for recipe detail """
+
+    ingredients = IngredientSerializer(many=True, read_only=True,)
+    tags = TagSerializer(many=True, read_only=True,)
