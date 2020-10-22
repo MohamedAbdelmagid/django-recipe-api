@@ -1,3 +1,5 @@
+import os, uuid
+
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -5,6 +7,14 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.conf import settings
+
+
+def recipe_image_path(instance, filename):
+    """ Generate file path for new recipe image """
+    ext = filename.split('.')[-1]
+    filename = '{uuid}.{extension}'.format(uuid=uuid.uuid4(), extension=ext)
+
+    return os.path.join('uploads/recipe/', filename)
 
 
 class UserManager(BaseUserManager):
@@ -67,6 +77,7 @@ class Recipe(models.Model):
     name = models.CharField(max_length=255)
     cook_time = models.IntegerField()
     price = models.DecimalField(max_digits=5, decimal_places=2)
+    image = models.ImageField(null=True, upload_to=recipe_image_path)
     link = models.CharField(max_length=255, blank=True)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
